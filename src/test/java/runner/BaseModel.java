@@ -28,8 +28,8 @@ public abstract class BaseModel<Self extends BaseModel<?>> {
     }
 
     public <Value> Self assertEquals(Function<Self, Value> actual, Value expected) {
-        Assert.assertEquals(actual.apply((Self)this), expected);
+        Assert.assertEquals(actual.apply((Self) this), expected);
 
-        return (Self)this;
+        return (Self) this;
     }
 }
