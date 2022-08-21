@@ -14,4 +14,5 @@ public class ToolsQATest extends BaseRunner {
         Assert.assertEquals(response.jsonPath().get("code"), "1204");
         Assert.assertEquals(response.jsonPath().get("message"), "User exists!");
     }
+
 }
