@@ -13,6 +13,11 @@ public final class CreateUserClass extends BaseModel<CreateUserClass> {
         return responsePOST(String.format("{ \"userName\": \"%s\", \"password\": \"%s\" }", username, password), "/Account/v1/User");
     }
 
+    public String getResponse(String username, String password) {
+        return responsePOST(String.format("{ \"userName\": \"%s\", \"password\": \"%s\" }", username, password), "/Account/v1/User")
+                .as(CreateUserGetJson.class).getCode();
+    }
+
     public boolean responseReceived(String username, String password) {
         return getResponseCreateUser(username, password) != null;
     }
