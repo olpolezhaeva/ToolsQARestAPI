@@ -36,6 +36,14 @@ public class ToolsQATest extends BaseRunner {
     }
 
     @Test
+    public void getCodeResponse() {
+        String codeResponse = new CreateUserClass(getTokenAPI())
+                .getResponse("username", "password");
+
+        Assert.assertEquals(codeResponse, "1300");
+    }
+
+    @Test
     public void getStatusCodTest() {
         RestAssured.baseURI = "https://demoqa.com/BookStore/v1/Books";
         RequestSpecification httpRequest = given();
