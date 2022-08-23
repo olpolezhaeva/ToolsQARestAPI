@@ -6,6 +6,7 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import model.CreateUserClass;
+import model.CreateUserGetJson;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import runner.BaseRunner;
@@ -26,21 +27,13 @@ public class ToolsQATest extends BaseRunner {
 
     @Test
     public void testCreateUserWithWrongPassword() {
-        Response response = new CreateUserClass(getTokenAPI())
+        CreateUserGetJson response = new CreateUserClass(getTokenAPI())
                 .getResponseCreateUser("username", "password");
 
-        Assert.assertEquals(response.jsonPath().get("code"), "1300");
-        Assert.assertEquals(response.jsonPath().get("message"), "Passwords must have at least one non alphanumeric character," +
+        Assert.assertEquals(response.getCode(), "1300");
+        Assert.assertEquals(response.getMessage(), "Passwords must have at least one non alphanumeric character," +
                 " one digit ('0'-'9'), one uppercase ('A'-'Z'), one lowercase ('a'-'z')," +
                 " one special character and Password must be eight characters or longer.");
-    }
-
-    @Test
-    public void getCodeResponse() {
-        String codeResponse = new CreateUserClass(getTokenAPI())
-                .getResponse("username", "password");
-
-        Assert.assertEquals(codeResponse, "1300");
     }
 
     @Test

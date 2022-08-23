@@ -1,15 +1,11 @@
 package runner;
 
 import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import model.CreateUserPostJson;
 import org.testng.annotations.BeforeClass;
 
 public abstract class BaseRunner {
-
-    private static final String baseAPI = "https://bookstore.toolsqa.com";
-    private static final String pageGenerateToken = "/Account/v1/GenerateToken";
 
     private String tokenAPI;
 
@@ -21,14 +17,14 @@ public abstract class BaseRunner {
 //                .setAccept(ContentType.JSON)
 //                .build();
 
-        RestAssured.baseURI = baseAPI;
+        RestAssured.baseURI = EndPoints.BASE_API_URL;
 
         tokenAPI = RestAssured
                 .given()
-                .header("Content-Type", "application/json") //Change to contentType. Same for AcceptType.
+                .contentType(ContentType.JSON)
                 .body(new CreateUserPostJson(BaseProperties.getProperties().getProperty("username"),
                         BaseProperties.getProperties().getProperty("password")))
-                .post(pageGenerateToken)
+                .post(EndPoints.PAGE_GENERATE_TOKEN)
                 .getBody()
                 .jsonPath()
                 .get("token")
@@ -40,6 +36,6 @@ public abstract class BaseRunner {
     }
 
     protected static String getBaseAPI() {
-        return baseAPI;
+        return EndPoints.BASE_API_URL;
     }
 }
