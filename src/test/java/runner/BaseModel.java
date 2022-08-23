@@ -1,6 +1,7 @@
 package runner;
 
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.testng.Assert;
 
@@ -8,7 +9,7 @@ import java.util.function.Function;
 
 public abstract class BaseModel<Self extends BaseModel<?>> {
 
-    private String tokenAPI;
+    private final String tokenAPI;
 
     public BaseModel(String tokenAPI) {
         this.tokenAPI = tokenAPI;
@@ -18,10 +19,10 @@ public abstract class BaseModel<Self extends BaseModel<?>> {
         return tokenAPI;
     }
 
-    protected Response responsePOST(String body, String address) {
+    protected Response responsePOST(Object body, String address) {
         return RestAssured
                 .given()
-                .header("Content-Type", "application/json")
+                .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + tokenAPI)
                 .body(body)
                 .post(String.format("%s%s", BaseRunner.getBaseAPI(), address));

@@ -1,6 +1,7 @@
 package model;
 
 import io.restassured.response.Response;
+import runner.EndPoints;
 import runner.BaseModel;
 
 public final class CreateUserClass extends BaseModel<CreateUserClass> {
@@ -9,13 +10,9 @@ public final class CreateUserClass extends BaseModel<CreateUserClass> {
         super(tokenAPI);
     }
 
-    public Response getResponseCreateUser(String username, String password) {
-        return responsePOST(String.format("{ \"userName\": \"%s\", \"password\": \"%s\" }", username, password), "/Account/v1/User");
-    }
-
-    public String getResponse(String username, String password) {
-        return responsePOST(String.format("{ \"userName\": \"%s\", \"password\": \"%s\" }", username, password), "/Account/v1/User")
-                .as(CreateUserGetJson.class).getCode();
+    public CreateUserGetJson getResponseCreateUser(String username, String password) {
+        return responsePOST(new CreateUserPostJson(username, password), EndPoints.PAGE_ACCOUNT_USER)
+                .as(CreateUserGetJson.class);
     }
 
     public boolean responseReceived(String username, String password) {
