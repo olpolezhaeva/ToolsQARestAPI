@@ -34,8 +34,4 @@ public abstract class BaseRunner {
     protected String getTokenAPI() {
         return tokenAPI;
     }
-
-    protected static String getBaseAPI() {
-        return EndPoints.BASE_API_URL;
-    }
 }

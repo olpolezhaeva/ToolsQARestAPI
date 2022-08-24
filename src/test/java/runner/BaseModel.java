@@ -25,7 +25,7 @@ public abstract class BaseModel<Self extends BaseModel<?>> {
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + tokenAPI)
                 .body(body)
-                .post(String.format("%s%s", BaseRunner.getBaseAPI(), address));
+                .post(address);
     }
 
     public <Value> Self assertEquals(Function<Self, Value> actual, Value expected) {
