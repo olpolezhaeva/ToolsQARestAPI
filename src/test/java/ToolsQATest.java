@@ -1,4 +1,5 @@
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.http.Method;
@@ -15,7 +16,7 @@ import runner.EndPoints;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
-import static runner.EndPoints.PAGE_ACCOUNT_USER;
+import static runner.EndPoints.*;
 
 public class ToolsQATest extends BaseRunner {
 
@@ -48,7 +49,7 @@ public class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void IteratingHeaders() {
+    public void iteratingHeaders() {
         RequestSpecification httpRequest = given();
         Response response = httpRequest.get(EndPoints.PAGE_BOOKSTORE_BOOKS);
 
@@ -99,7 +100,7 @@ public class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void UserRegistrationSuccessfulTest()
+    public void userRegistrationSuccessfulTest()
     {
         RequestSpecification requestSpecification = given().baseUri("https://demoqa.com/Account/v1");
         RequestSpecification request = RestAssured.given().spec(requestSpecification);
@@ -112,7 +113,7 @@ public class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void UserRegistrationSuccessfulTest1() {
+    public void userRegistrationSuccessfulTest1() {
         RequestSpecification request = RestAssured.given();
         request.body(new CreateUserPostJson("test_rest", "rest@123"));
         Response response = request.post(PAGE_ACCOUNT_USER);
@@ -123,7 +124,7 @@ public class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void UserRegistrationSuccessfulTest2() {
+    public void userRegistrationSuccessfulTest2() {
         RequestSpecification request = RestAssured.given();
         request.body(new CreateUserPostJson("test_rest", "rest@123"));
         Response response = request.post(PAGE_ACCOUNT_USER);
@@ -137,5 +138,41 @@ public class ToolsQATest extends BaseRunner {
             JsonSuccessResponse jsonSuccessResponse = body.as(JsonSuccessResponse.class);
             Assert.assertEquals("OPERATION_SUCCESS", jsonSuccessResponse.getCode());
         }
+    }
+    @Test
+    public void authenticationBasicsTest() {
+
+        Response response = RestAssured.given().contentType(ContentType.JSON).accept(ContentType.JSON)
+                .body(new CreateUserPostJson("patriotby07", "7563P@triotby13756785"))
+                .post("/Account/v1/Authorized");
+        System.out.println("Status code: " + response.getStatusCode());
+        System.out.println("Status message " + response.body().asString());
+    }
+
+    @Test
+    public void addBookTest() {
+        String id = "cf27b539-6614-4f27-9bbc-8a2154520673";
+        String isbn = "9781449325862";
+
+        List<String> result = RestAssured.given().contentType(ContentType.JSON).accept(ContentType.JSON).auth()
+                .oauth2(getTokenAPI()).body(String.format("{\"userId\": \"%s\",\n" +
+                        "  \"collectionOfIsbns\": [\n" +
+                        "    {\n" +
+                        "      \"isbn\": \"%s\"\n" +
+                        "    }\n" +
+                        "  ]}", id, isbn)).post(PAGE_BOOKSTORE_BOOKS).getBody().jsonPath().get("books.isbn");
+
+        Assert.assertEquals("9781449325862", result.get(0));
+
+    }
+
+    @Test(dependsOnMethods = "addBookTest")
+    public void deleteBookTest() {
+        Response response = RestAssured.given().contentType(ContentType.JSON).accept(ContentType.JSON).auth()
+                .oauth2(getTokenAPI())
+                .body(new CreateNewBookPutJson("cf27b539-6614-4f27-9bbc-8a2154520673", "9781449325862"))
+                .delete(PAGE_BOOKSTORE_BOOK);
+
+        Assert.assertEquals(204, response.getStatusCode());
     }
 }
