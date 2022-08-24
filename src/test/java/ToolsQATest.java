@@ -1,3 +1,4 @@
+import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.http.Method;
@@ -5,9 +6,7 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBody;
 import io.restassured.specification.RequestSpecification;
-import model.CreateUserClass;
-import model.CreateUserGetJson;
-import org.json.simple.JSONObject;
+import model.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import runner.BaseRunner;
@@ -16,6 +15,7 @@ import runner.EndPoints;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
+import static runner.EndPoints.PAGE_ACCOUNT_USER;
 
 public class ToolsQATest extends BaseRunner {
 
@@ -89,30 +89,22 @@ public class ToolsQATest extends BaseRunner {
         Assert.assertEquals(actual, title.toArray());
     }
     @Test
-    public void postCreateUserTest() {
-        RestAssured.baseURI = "https://demoqa.com/BookStore/v1/Books";
+    public void postCreateNewBookTest() {
         RequestSpecification request = RestAssured.given();
-        JSONObject requestParams = new JSONObject();
-        requestParams.put("userId", "TQ128");
-        requestParams.put("isbn", "9781449325869");
-
         request.header("Content-Type", "application/json")
-                .body(requestParams.toJSONString());
+                .body(new CreateNewBookPutJson("TQ128", "9781449325869"));
         Response response = request.post("/BookStoreV1BooksPost");
-        //System.out.println(response.getBody().asString());
 
-        Assert.assertEquals(404, response.getStatusCode());
+        Assert.assertEquals(302, response.getStatusCode());
     }
 
     @Test
     public void UserRegistrationSuccessfulTest()
     {
-        RestAssured.baseURI ="https://demoqa.com/Account/v1";
-        RequestSpecification request = RestAssured.given();
-        JSONObject requestParams = new JSONObject();
-        requestParams.put("userName", "test_rest");
-        requestParams.put("password", "Testrest@123");
-        request.body(requestParams.toJSONString());
+        RequestSpecification requestSpecification = given().baseUri("https://demoqa.com/Account/v1");
+        RequestSpecification request = RestAssured.given().spec(requestSpecification);
+
+        request.body(new CreateUserPostJson("test_rest", "Testrest@123"));
         Response response = request.put("/User");
 
         Assert.assertEquals("HTTP/1.1 404 Not Found", response.getStatusLine());
@@ -121,19 +113,29 @@ public class ToolsQATest extends BaseRunner {
 
     @Test
     public void UserRegistrationSuccessfulTest1() {
-        RestAssured.baseURI ="https://demoqa.com";
         RequestSpecification request = RestAssured.given();
-        JSONObject requestParams = new JSONObject();
-        requestParams.put("UserName", "test_rest");
-        requestParams.put("Password", "rest@123");
-        request.body(requestParams.toJSONString());
-        Response response = request.post("/Account/v1/User");
+        request.body(new CreateUserPostJson("test_rest", "rest@123"));
+        Response response = request.post(PAGE_ACCOUNT_USER);
         ResponseBody body = response.getBody();
-// Deserialize the Response body into JSONSuccessResponse
         JsonSuccessResponse responseBody = body.as(JsonSuccessResponse.class);
-// Use the JSONSuccessResponseclass instance to Assert the values of Response.
-        Assert.assertEquals("1200", responseBody.code);
-        Assert.assertEquals("UserName and Password required.", responseBody.message);
+        Assert.assertEquals("1200", responseBody.getCode());
+        Assert.assertEquals("UserName and Password required.", responseBody.getMessage());
     }
 
+    @Test
+    public void UserRegistrationSuccessfulTest2() {
+        RequestSpecification request = RestAssured.given();
+        request.body(new CreateUserPostJson("test_rest", "rest@123"));
+        Response response = request.post(PAGE_ACCOUNT_USER);
+        ResponseBody body = response.getBody();
+
+        if(response.getStatusCode() == 200) {
+            JsonFailureResponse jsonFailureResponse = body.as(JsonFailureResponse.class);
+            Assert.assertEquals("User already exists", jsonFailureResponse.getFaultId());
+            Assert.assertEquals("FAULT_USER_ALREADY_EXISTS", jsonFailureResponse.getFault());
+        } else if (response.getStatusCode() == 201) {
+            JsonSuccessResponse jsonSuccessResponse = body.as(JsonSuccessResponse.class);
+            Assert.assertEquals("OPERATION_SUCCESS", jsonSuccessResponse.getCode());
+        }
+    }
 }
