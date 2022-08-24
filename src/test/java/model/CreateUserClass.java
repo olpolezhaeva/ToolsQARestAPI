@@ -1,6 +1,5 @@
 package model;
 
-import io.restassured.response.Response;
 import runner.EndPoints;
 import runner.BaseModel;
 

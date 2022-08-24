@@ -1,4 +1,3 @@
-import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
 import io.restassured.http.Method;
@@ -10,6 +9,7 @@ import model.CreateUserGetJson;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import runner.BaseRunner;
+import runner.EndPoints;
 
 import java.util.List;
 
@@ -38,9 +38,8 @@ public class ToolsQATest extends BaseRunner {
 
     @Test
     public void getStatusCodTest() {
-        RestAssured.baseURI = "https://demoqa.com/BookStore/v1/Books";
         RequestSpecification httpRequest = given();
-        Response response = httpRequest.request(Method.GET, "");
+        Response response = httpRequest.request(Method.GET, EndPoints.PAGE_BOOKSTORE_BOOKS);
 
         Assert.assertEquals(200, response.getStatusCode());
         Assert.assertEquals("HTTP/1.1 200 OK", response.getStatusLine());
@@ -48,9 +47,8 @@ public class ToolsQATest extends BaseRunner {
 
     @Test
     public void IteratingHeaders() {
-        RestAssured.baseURI = "https://demoqa.com/BookStore/v1/Books";
         RequestSpecification httpRequest = given();
-        Response response = httpRequest.get("");
+        Response response = httpRequest.get(EndPoints.PAGE_BOOKSTORE_BOOKS);
 
         Headers headers = response.headers();
 
@@ -68,8 +66,8 @@ public class ToolsQATest extends BaseRunner {
 
     @Test
     public void getBodyBooksTest() {
-        RestAssured.baseURI = "https://demoqa.com/BookStore/v1/Books";
-        RequestSpecification httpRequest = given();
+        RequestSpecification requestSpecification = given().baseUri("https://demoqa.com/BookStore/v1/Books");
+        RequestSpecification httpRequest = given().spec(requestSpecification);
         Response response = httpRequest.get("viewport");
 
         Assert.assertTrue(response.getBody().asString().contains("viewport"));
@@ -80,9 +78,8 @@ public class ToolsQATest extends BaseRunner {
         String[] actual = {"Git Pocket Guide", "Learning JavaScript Design Patterns", "Designing Evolvable Web APIs with ASP.NET",
                 "Speaking JavaScript", "You Don't Know JS", "Programming JavaScript Applications", "Eloquent JavaScript, Second Edition", "Understanding ECMAScript 6"};
 
-        RestAssured.baseURI = "https://demoqa.com/BookStore/v1/Books";
         RequestSpecification httpRequest = given();
-        Response response = httpRequest.get("");
+        Response response = httpRequest.get(EndPoints.PAGE_BOOKSTORE_BOOKS);
 
         JsonPath jsonPath = response.jsonPath();
         List<String> title = jsonPath.get("books.title");
