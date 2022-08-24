@@ -4,9 +4,11 @@ import io.restassured.http.Headers;
 import io.restassured.http.Method;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBody;
 import io.restassured.specification.RequestSpecification;
 import model.CreateUserClass;
 import model.CreateUserGetJson;
+import org.json.simple.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import runner.BaseRunner;
@@ -89,4 +91,52 @@ public class ToolsQATest extends BaseRunner {
 
         Assert.assertEquals(actual, title.toArray());
     }
+    @Test
+    public void postCreateUserTest() {
+        RestAssured.baseURI = "https://demoqa.com/BookStore/v1/Books";
+        RequestSpecification request = RestAssured.given();
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("userId", "TQ128");
+        requestParams.put("isbn", "9781449325869");
+
+        request.header("Content-Type", "application/json")
+                .body(requestParams.toJSONString());
+        Response response = request.post("/BookStoreV1BooksPost");
+        //System.out.println(response.getBody().asString());
+
+        Assert.assertEquals(404, response.getStatusCode());
+    }
+
+    @Test
+    public void UserRegistrationSuccessfulTest()
+    {
+        RestAssured.baseURI ="https://demoqa.com/Account/v1";
+        RequestSpecification request = RestAssured.given();
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("userName", "test_rest");
+        requestParams.put("password", "Testrest@123");
+        request.body(requestParams.toJSONString());
+        Response response = request.put("/User");
+
+        Assert.assertEquals("HTTP/1.1 404 Not Found", response.getStatusLine());
+        Assert.assertTrue(response.getBody().asString().contains("Error"));
+    }
+
+    @Test
+    public void UserRegistrationSuccessfulTest1() {
+        RestAssured.baseURI ="https://demoqa.com";
+        RequestSpecification request = RestAssured.given();
+        JSONObject requestParams = new JSONObject();
+        requestParams.put("UserName", "test_rest");
+        requestParams.put("Password", "rest@123");
+        request.body(requestParams.toJSONString());
+        Response response = request.post("/Account/v1/User");
+        ResponseBody body = response.getBody();
+// Deserialize the Response body into JSONSuccessResponse
+        JsonSuccessResponse responseBody = body.as(JsonSuccessResponse.class);
+// Use the JSONSuccessResponseclass instance to Assert the values of Response.
+        Assert.assertEquals("1200", responseBody.code);
+        Assert.assertEquals("UserName and Password required.", responseBody.message);
+    }
+
 }
