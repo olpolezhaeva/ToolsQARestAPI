@@ -163,7 +163,6 @@ public class ToolsQATest extends BaseRunner {
                         "  ]}", id, isbn)).post(PAGE_BOOKSTORE_BOOKS).getBody().jsonPath().get("books.isbn");
 
         Assert.assertEquals("9781449325862", result.get(0));
-
     }
 
     @Test(dependsOnMethods = "addBookTest")
