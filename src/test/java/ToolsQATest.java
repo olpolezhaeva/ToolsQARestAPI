@@ -1,9 +1,6 @@
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
-import io.restassured.response.ResponseBody;
-import io.restassured.specification.RequestSpecification;
 import model.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -16,6 +13,9 @@ import static io.restassured.RestAssured.given;
 import static runner.EndPoints.*;
 
 public class ToolsQATest extends BaseRunner {
+
+    private String userId1;
+    private String tokenAPI1;
 
     @Test
     public void testGetResponse() {
@@ -103,7 +103,7 @@ public class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void userRegistrationSuccessfulTest1() {
+    public void emptyContentTypeUserRegistrationTest() {
         JsonSuccessResponse jsonSuccessResponse = given()
                 .body(new CreateUserPostJson("test_rest", "rest@123"))
                 .post(PAGE_ACCOUNT_USER)
@@ -115,20 +115,52 @@ public class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void userRegistrationSuccessfulTest2() {
-        Response response = given().body(new CreateUserPostJson("test_rest", "rest@123"))
+    public void userRegistrationSuccessfulTest() {
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .body(new CreateUserPostJson("test_rest", "Rest@123"))
                 .post(PAGE_ACCOUNT_USER);
 
-        if (response.getStatusCode() == 200) {
-            JsonFailureResponse jsonFailureResponse = response.getBody().as(JsonFailureResponse.class);
+        userId1 = response
+                .getBody()
+                .jsonPath()
+                .get("userID")
+                .toString();
 
-            Assert.assertEquals(jsonFailureResponse.getFaultId(), "User already exists");
-            Assert.assertEquals(jsonFailureResponse.getFault(),"FAULT_USER_ALREADY_EXISTS");
-        } else if (response.getStatusCode() == 201) {
-            JsonSuccessResponse jsonSuccessResponse = response.getBody().as(JsonSuccessResponse.class);
+        tokenAPI1 = given()
+                .contentType(ContentType.JSON)
+                .body(new CreateUserPostJson("test_rest", "Rest@123"))
+                .post(EndPoints.PAGE_GENERATE_TOKEN)
+                .getBody()
+                .jsonPath()
+                .get("token")
+                .toString();
 
-            Assert.assertEquals(jsonSuccessResponse.getCode(),"OPERATION_SUCCESS");
-        }
+        Assert.assertEquals(response.getStatusCode(), 201);
+    }
+
+    @Test (dependsOnMethods = "userRegistrationSuccessfulTest")
+    public void userRegistrationExistingUserTest() {
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .body(new CreateUserPostJson("test_rest", "Rest@123"))
+                .post(PAGE_ACCOUNT_USER);
+
+        Assert.assertEquals(response.getStatusCode(), 406);
+    }
+
+    @Test(dependsOnMethods = "userRegistrationExistingUserTest")
+    public void userDeleteTest() {
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .auth()
+                .oauth2(tokenAPI1)
+                .delete(EndPoints.PAGE_ACCOUNT_USER + "/" + userId1);
+
+        Assert.assertEquals(response.getStatusCode(), 204);
     }
 
     @Test
