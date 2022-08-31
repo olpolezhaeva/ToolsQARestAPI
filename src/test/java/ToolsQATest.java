@@ -12,23 +12,36 @@ import java.util.List;
 import static io.restassured.RestAssured.given;
 import static runner.EndPoints.*;
 
-public class ToolsQATest extends BaseRunner {
+public final class ToolsQATest extends BaseRunner {
 
-    private String userId1;
-    private String tokenAPI1;
+    private String newUserId;
+    private String newTokenAPI;
 
     @Test
     public void testGetResponse() {
-        boolean responseIsReceived = new CreateUserClass(getTokenAPI())
-                .responseReceived("username", "password");
+        Response response = RestAssured
+                .given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .auth()
+                .oauth2(getTokenAPI())
+                .body(new CreateUserPostJson("username",  "password"))
+                .post(PAGE_ACCOUNT_USER);
 
-        Assert.assertTrue(responseIsReceived);
+        Assert.assertNotNull(response);
     }
 
     @Test
     public void testCreateUserWithWrongPassword() {
-        CreateUserGetJson response = new CreateUserClass(getTokenAPI())
-                .getResponseCreateUser("username", "password");
+        CreateUserGetJson response = RestAssured
+                .given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .auth()
+                .oauth2(getTokenAPI())
+                .body(new CreateUserPostJson("username",  "password"))
+                .post(PAGE_ACCOUNT_USER)
+                .as(CreateUserGetJson.class);
 
         Assert.assertEquals(response.getCode(), "1300");
         Assert.assertEquals(response.getMessage(), "Passwords must have at least one non alphanumeric character," +
@@ -122,13 +135,13 @@ public class ToolsQATest extends BaseRunner {
                 .body(new CreateUserPostJson("test_rest", "Rest@123"))
                 .post(PAGE_ACCOUNT_USER);
 
-        userId1 = response
+        newUserId = response
                 .getBody()
                 .jsonPath()
                 .get("userID")
                 .toString();
 
-        tokenAPI1 = given()
+        newTokenAPI = given()
                 .contentType(ContentType.JSON)
                 .body(new CreateUserPostJson("test_rest", "Rest@123"))
                 .post(EndPoints.PAGE_GENERATE_TOKEN)
@@ -157,8 +170,8 @@ public class ToolsQATest extends BaseRunner {
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .auth()
-                .oauth2(tokenAPI1)
-                .delete(EndPoints.PAGE_ACCOUNT_USER + "/" + userId1);
+                .oauth2(newTokenAPI)
+                .delete(EndPoints.PAGE_ACCOUNT_USER + "/" + newUserId);
 
         Assert.assertEquals(response.getStatusCode(), 204);
     }

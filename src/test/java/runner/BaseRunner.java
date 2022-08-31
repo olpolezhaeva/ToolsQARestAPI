@@ -36,12 +36,6 @@ public abstract class BaseRunner {
 
     @BeforeClass
     protected void setTokenAPI() {
-//        RestAssured.requestSpecification = new RequestSpecBuilder()
-//                .setBaseUri(baseAPI)
-//                .setContentType(ContentType.JSON)
-//                .setAccept(ContentType.JSON)
-//                .build();
-
         tokenAPI = RestAssured
                 .given()
                 .contentType(ContentType.JSON)
