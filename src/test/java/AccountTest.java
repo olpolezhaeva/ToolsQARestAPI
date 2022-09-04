@@ -1,18 +1,15 @@
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import model.*;
+import model.CreateUserGetJson;
+import model.CreateUserPostJson;
+import model.JsonSuccessResponse;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import runner.BaseRunner;
 import runner.EndPoints;
 
-import java.util.List;
-
-import static io.restassured.RestAssured.given;
-import static runner.EndPoints.*;
-
-public final class ToolsQATest extends BaseRunner {
+public final class AccountTest extends BaseRunner {
 
     private String newUserId;
     private String newTokenAPI;
@@ -26,7 +23,7 @@ public final class ToolsQATest extends BaseRunner {
                 .auth()
                 .oauth2(getTokenAPI())
                 .body(new CreateUserPostJson("username",  "password"))
-                .post(PAGE_ACCOUNT_USER);
+                .post(EndPoints.PAGE_ACCOUNT_USER);
 
         Assert.assertNotNull(response);
     }
@@ -40,7 +37,7 @@ public final class ToolsQATest extends BaseRunner {
                 .auth()
                 .oauth2(getTokenAPI())
                 .body(new CreateUserPostJson("username",  "password"))
-                .post(PAGE_ACCOUNT_USER)
+                .post(EndPoints.PAGE_ACCOUNT_USER)
                 .as(CreateUserGetJson.class);
 
         Assert.assertEquals(response.getCode(), "1300");
@@ -50,17 +47,9 @@ public final class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void testGetStatusCode() {
-        Response response = given()
-                .get(EndPoints.PAGE_BOOKSTORE_BOOKS);
-
-        Assert.assertEquals(response.getStatusCode(), 200);
-        Assert.assertEquals(response.getStatusLine(), "HTTP/1.1 200 OK");
-    }
-
-    @Test
     public void testGetHeaders() {
-        Response response = given()
+        Response response = RestAssured
+                .given()
                 .get(EndPoints.PAGE_BOOKSTORE_BOOKS);
 
         Assert.assertEquals(response.header("Content-Type"), "application/json; charset=utf-8");
@@ -72,44 +61,13 @@ public final class ToolsQATest extends BaseRunner {
     }
 
     @Test
-    public void testGetBodyContainsBooks() {
-        String response = given()
-                .get(PAGE_BOOKSTORE_BOOKS)
-                .getBody()
-                .asString();
-
-        Assert.assertTrue(response.contains("books"));
-    }
-
-    @Test
-    public void testVerifyListTitle() {
-        String[] expected = {"Git Pocket Guide", "Learning JavaScript Design Patterns", "Designing Evolvable Web APIs with ASP.NET",
-                "Speaking JavaScript", "You Don't Know JS", "Programming JavaScript Applications", "Eloquent JavaScript, Second Edition", "Understanding ECMAScript 6"};
-
-        List<String> title = given()
-                .get(EndPoints.PAGE_BOOKSTORE_BOOKS)
-                .jsonPath()
-                .get("books.title");
-
-        Assert.assertEquals(title.toArray(), expected);
-    }
-
-    @Test
-    public void testFailedCreateNewBook() {
-        Response response = given().contentType(ContentType.JSON)
-                .body(new CreateNewBookPutJson("TQ128", "9781449325869"))
-                .post("/BookStoreV1BooksPost");
-
-        Assert.assertEquals(response.getStatusCode(), 302);
-    }
-
-    @Test
     public void testUserExists() {
-        CreateUserGetJson createUserGetJson = given()
+        CreateUserGetJson createUserGetJson = RestAssured
+                .given()
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .body(new CreateUserPostJson("test_rest", "Testrest@123"))
-                .post(PAGE_ACCOUNT_USER).getBody().as(CreateUserGetJson.class);
+                .post(EndPoints.PAGE_ACCOUNT_USER).getBody().as(CreateUserGetJson.class);
 
         Assert.assertEquals(createUserGetJson.getCode(), "1204");
         Assert.assertEquals(createUserGetJson.getMessage(), "User exists!");
@@ -117,9 +75,10 @@ public final class ToolsQATest extends BaseRunner {
 
     @Test
     public void emptyContentTypeUserRegistrationTest() {
-        JsonSuccessResponse jsonSuccessResponse = given()
+        JsonSuccessResponse jsonSuccessResponse = RestAssured
+                .given()
                 .body(new CreateUserPostJson("test_rest", "rest@123"))
-                .post(PAGE_ACCOUNT_USER)
+                .post(EndPoints.PAGE_ACCOUNT_USER)
                 .getBody()
                 .as(JsonSuccessResponse.class);
 
@@ -129,11 +88,12 @@ public final class ToolsQATest extends BaseRunner {
 
     @Test
     public void userRegistrationSuccessfulTest() {
-        Response response = given()
+        Response response = RestAssured
+                .given()
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .body(new CreateUserPostJson("test_rest", "Rest@123"))
-                .post(PAGE_ACCOUNT_USER);
+                .post(EndPoints.PAGE_ACCOUNT_USER);
 
         newUserId = response
                 .getBody()
@@ -141,7 +101,8 @@ public final class ToolsQATest extends BaseRunner {
                 .get("userID")
                 .toString();
 
-        newTokenAPI = given()
+        newTokenAPI = RestAssured
+                .given()
                 .contentType(ContentType.JSON)
                 .body(new CreateUserPostJson("test_rest", "Rest@123"))
                 .post(EndPoints.PAGE_GENERATE_TOKEN)
@@ -155,65 +116,25 @@ public final class ToolsQATest extends BaseRunner {
 
     @Test (dependsOnMethods = "userRegistrationSuccessfulTest")
     public void userRegistrationExistingUserTest() {
-        Response response = given()
+        Response response = RestAssured
+                .given()
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .body(new CreateUserPostJson("test_rest", "Rest@123"))
-                .post(PAGE_ACCOUNT_USER);
+                .post(EndPoints.PAGE_ACCOUNT_USER);
 
         Assert.assertEquals(response.getStatusCode(), 406);
     }
 
     @Test(dependsOnMethods = "userRegistrationExistingUserTest")
     public void userDeleteTest() {
-        Response response = given()
+        Response response = RestAssured
+                .given()
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .auth()
                 .oauth2(newTokenAPI)
                 .delete(EndPoints.PAGE_ACCOUNT_USER + "/" + newUserId);
-
-        Assert.assertEquals(response.getStatusCode(), 204);
-    }
-
-    @Test
-    public void addBookTest() {
-        String isbn = "9781449325862";
-
-        List<String> result = RestAssured.given().contentType(ContentType.JSON).accept(ContentType.JSON).auth()
-                .oauth2(getTokenAPI()).body(String.format("{\"userId\": \"%s\",\n" +
-                        "  \"collectionOfIsbns\": [\n" +
-                        "    {\n" +
-                        "      \"isbn\": \"%s\"\n" +
-                        "    }\n" +
-                        "  ]}", getUserId(), isbn)).post(PAGE_BOOKSTORE_BOOKS).getBody().jsonPath().get("books.isbn");
-
-        Assert.assertEquals(result.get(0), "9781449325862");
-    }
-
-    @Test(dependsOnMethods = "addBookTest")
-    public void updateBookPutTest() {
-        String oldIsbn = "/9781449325862";
-        String newIsbn = "9781449331818";
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .auth()
-                .oauth2(getTokenAPI())
-                .body(new CreateNewBookPutJson(getUserId(), newIsbn))
-                .put(PAGE_BOOKSTORE_BOOKS.concat(oldIsbn));
-
-        Assert.assertEquals(response.getStatusCode(), 200);
-    }
-
-
-    @Test(dependsOnMethods = "updateBookPutTest")
-    public void deleteBookTest() {
-        Response response = RestAssured.given().contentType(ContentType.JSON).accept(ContentType.JSON).auth()
-                .oauth2(getTokenAPI())
-                .body(new CreateNewBookPutJson(getUserId(), "9781449331818"))
-                .delete(PAGE_BOOKSTORE_BOOK);
 
         Assert.assertEquals(response.getStatusCode(), 204);
     }

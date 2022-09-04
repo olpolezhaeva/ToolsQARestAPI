@@ -4,14 +4,15 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import model.CreateUserPostJson;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
 public abstract class BaseRunner {
 
     private String tokenAPI;
     private String userId;
 
-    @BeforeSuite
+    @BeforeClass
     protected void createUser() {
         RestAssured.baseURI = EndPoints.BASE_API_URL;
 
@@ -48,7 +49,7 @@ public abstract class BaseRunner {
                 .toString();
     }
 
-    @AfterSuite
+    @AfterClass
     protected void deleteUser() {
         RestAssured
                 .given()
